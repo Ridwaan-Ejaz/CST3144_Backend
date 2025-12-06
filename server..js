@@ -6,11 +6,10 @@ app.use(express.json());
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*')
     res.setHeader('Access-Control-Allow-Credentials', 'true')
-    res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', "Access-Control-Allow-Headers, Origin ,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
+    res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT,DELETE');
+    res.setHeader('Access-Control-Allow-Headers', "Access-Control-Allow-Headers, Origin ,Accept, X-Requested-With, Content-Type");
     next();
-})
-
+});
 
 const MongoClient = require('mongodb').MongoClient;
 let db;
@@ -30,8 +29,25 @@ MongoClient.connect(
 );
 
 
+
 app.get('/', (req, res) => {
-    res.send("Backend API is running");
+    res.send("Backend API running — try /collection/lessons");
+});
+
+
+
+app.param('collectionName', (req, res, next, collectionName) => {
+    req.collection = db.collection(collectionName);
+    next();
+});
+
+
+
+app.get('/collection/:collectionName', (req, res) => {
+    req.collection.find({}).toArray((err, results) => {
+        if (err) return next(err);
+        res.send(results);
+    });
 });
 
 
