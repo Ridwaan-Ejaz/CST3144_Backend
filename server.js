@@ -3,13 +3,16 @@ const app = express();
 
 app.use(express.json());
 
+
 app.use((req, res, next) => {
     const time = new Date().toISOString();
     console.log(`[${time}] ${req.method} request on ${req.url}`);
     next();
 });
 
+
 app.use('/images', express.static('images'));
+
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*')
@@ -18,6 +21,7 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Headers', "Access-Control-Allow-Headers, Origin ,Accept, X-Requested-With, Content-Type");
     next();
 });
+
 
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
@@ -45,23 +49,6 @@ app.get('/', (req, res) => {
 app.param('collectionName', (req, res, next, collectionName) => {
     req.collection = db.collection(collectionName);
     next();
-});
-
-
-app.get('/collection/:collectionName/search/:query', (req, res, next) => {
-    const query = req.params.query;
-
-    req.collection.find({
-        $or: [
-            { subject: { $regex: query, $options: 'i' } },
-            { location: { $regex: query, $options: 'i' } },
-            { price: { $regex: query, $options: 'i' } },
-            { spaces: { $regex: query, $options: 'i' } }
-        ]
-    }).toArray((err, results) => {
-        if (err) return next(err);
-        res.send(results);
-    });
 });
 
 
@@ -111,6 +98,26 @@ app.delete('/collection/:collectionName/:id', (req, res, next) => {
         }
     );
 });
+
+
+app.get('/search/:text', (req, res, next) => {
+    const text = req.params.text.toLowerCase();
+
+    const lessonsCollection = db.collection("lessons");
+    lessonsCollection.find({}).toArray((err, results) => {
+        if (err) return next(err);
+
+        const filtered = results.filter(item =>
+            item.subject.toLowerCase().includes(text) ||
+            item.location.toLowerCase().includes(text) ||
+            String(item.price).includes(text) ||
+            String(item.spaces).includes(text)
+        );
+
+        res.send(filtered);
+    });
+});
+
 
 
 const port = process.env.PORT || 3000;
