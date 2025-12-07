@@ -3,7 +3,6 @@ const app = express();
 
 app.use(express.json());
 
-
 app.use((req, res, next) => {
     const time = new Date().toISOString();
     console.log(`[${time}] ${req.method} request on ${req.url}`);
@@ -11,7 +10,6 @@ app.use((req, res, next) => {
 });
 
 app.use('/images', express.static('images'));
-
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*')
@@ -47,6 +45,23 @@ app.get('/', (req, res) => {
 app.param('collectionName', (req, res, next, collectionName) => {
     req.collection = db.collection(collectionName);
     next();
+});
+
+
+app.get('/collection/:collectionName/search/:query', (req, res, next) => {
+    const query = req.params.query;
+
+    req.collection.find({
+        $or: [
+            { subject: { $regex: query, $options: 'i' } },
+            { location: { $regex: query, $options: 'i' } },
+            { price: { $regex: query, $options: 'i' } },
+            { spaces: { $regex: query, $options: 'i' } }
+        ]
+    }).toArray((err, results) => {
+        if (err) return next(err);
+        res.send(results);
+    });
 });
 
 
