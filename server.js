@@ -3,6 +3,13 @@ const app = express();
 
 app.use(express.json());
 
+
+app.use((req, res, next) => {
+    const time = new Date().toISOString();
+    console.log(`[${time}] ${req.method} request on ${req.url}`);
+    next();
+});
+
 app.use('/images', express.static('images'));
 
 
